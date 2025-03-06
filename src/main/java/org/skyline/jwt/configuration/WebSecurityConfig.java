@@ -2,6 +2,7 @@ package org.skyline.jwt.configuration;
 
 import lombok.RequiredArgsConstructor;
 import org.skyline.jwt.helpers.UserDetailsServiceImpl;
+import org.skyline.jwt.security.FilterChainExceptionHandler;
 import org.skyline.jwt.security.JwtAuthFilter;
 import org.skyline.jwt.security.JwtAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +19,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+import org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver;
 
 @Configuration
 @EnableWebSecurity
@@ -28,6 +32,12 @@ public class WebSecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtAuthenticationEntryPoint unauthorizedHandler;
+    private final FilterChainExceptionHandler filterChainExceptionHandler;
+
+    @Bean("customHandlerExceptionResolver")
+    public HandlerExceptionResolver customHandlerExceptionResolver() {
+        return new DefaultHandlerExceptionResolver();
+    }
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider(){
@@ -53,7 +63,8 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         return http.csrf(AbstractHttpConfigurer::disable)
-                .exceptionHandling((exceptionHandling) -> exceptionHandling.authenticationEntryPoint(unauthorizedHandler))
+                .exceptionHandling(exceptionHandling ->exceptionHandling.authenticationEntryPoint(unauthorizedHandler))
+                .addFilterBefore(filterChainExceptionHandler, LogoutFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .anyRequest().authenticated()

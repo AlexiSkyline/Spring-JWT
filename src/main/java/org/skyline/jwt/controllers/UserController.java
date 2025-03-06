@@ -1,13 +1,17 @@
 package org.skyline.jwt.controllers;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
-import org.skyline.jwt.dto.input.AuthRequestDTO;
+import org.skyline.jwt.dto.input.LoginRequestDTO;
 import org.skyline.jwt.dto.input.RefreshTokenRequestDTO;
-import org.skyline.jwt.dto.input.UserRequest;
+import org.skyline.jwt.dto.input.UserRequestDTO;
 import org.skyline.jwt.dto.output.JwtResponseDTO;
-import org.skyline.jwt.dto.output.UserResponse;
+import org.skyline.jwt.dto.output.UserResponseDTO;
 import org.skyline.jwt.models.RefreshToken;
+import org.skyline.jwt.models.exception.EmailAlreadyExistsException;
+import org.skyline.jwt.models.exception.InvalidCredentialsException;
+import org.skyline.jwt.models.exception.RefreshTokenNotFoundException;
+import org.skyline.jwt.models.exception.UserNotFoundException;
 import org.skyline.jwt.security.JwtUtils;
 import org.skyline.jwt.services.interfaces.IRefreshTokenService;
 import org.skyline.jwt.services.interfaces.IUserService;
@@ -17,7 +21,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,14 +36,15 @@ public class UserController {
     private final AuthenticationManager authenticationManager;
 
     @GetMapping("/users")
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUser());
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<UserResponse> getUserProfile() throws BadRequestException {
-        UserResponse userResponse = userService.getUser().orElseThrow(() -> new BadRequestException("User not exists"));
-        return ResponseEntity.ok(userResponse);
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+    public ResponseEntity<UserResponseDTO> getUserProfile() {
+        UserResponseDTO userResponseDTO = userService.getUser().orElseThrow(() -> new UserNotFoundException("User not exists"));
+        return ResponseEntity.ok(userResponseDTO);
     }
 
     @GetMapping("/test")
@@ -50,35 +54,35 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<JwtResponseDTO> register(@RequestBody UserRequest userRequest) throws BadRequestException {
-        UserResponse userResponse = userService.saveUser(userRequest).orElseThrow(() -> new BadRequestException("User already exists"));
+    public ResponseEntity<JwtResponseDTO> register(@Valid @RequestBody UserRequestDTO userRequestDTO) {
+        UserResponseDTO userResponseDTO = userService.saveUser(userRequestDTO).orElseThrow(() -> new EmailAlreadyExistsException("Email is already in use"));
 
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userResponse.getEmail())
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userResponseDTO.getEmail())
                 .orElseThrow(() -> new RuntimeException("Failed to create refresh token"));
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(buildJwtResponse(userResponse.getEmail(), refreshToken.getToken()));
+                .body(buildJwtResponse(userResponseDTO.getEmail(), refreshToken.getToken()));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<JwtResponseDTO> authenticateAndGetToken(@RequestBody AuthRequestDTO authRequestDTO) throws BadRequestException {
+    public ResponseEntity<JwtResponseDTO> authenticateAndGetToken(@Valid @RequestBody LoginRequestDTO loginRequestDTO) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authRequestDTO.getEmail(), authRequestDTO.getPassword())
+                new UsernamePasswordAuthenticationToken(loginRequestDTO.getEmail(), loginRequestDTO.getPassword())
         );
 
         if (!authentication.isAuthenticated()) {
             throw new InvalidCredentialsException("Invalid credentials");
         }
 
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(authRequestDTO.getEmail())
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(loginRequestDTO.getEmail())
                 .orElseThrow(() -> new RuntimeException("Failed to create refresh token"));
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(buildJwtResponse(authRequestDTO.getEmail(), refreshToken.getToken()));
+                .body(buildJwtResponse(loginRequestDTO.getEmail(), refreshToken.getToken()));
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<JwtResponseDTO> refreshToken(@RequestBody RefreshTokenRequestDTO refreshTokenRequestDTO) {
+    public ResponseEntity<JwtResponseDTO> refreshToken(@Valid @RequestBody RefreshTokenRequestDTO refreshTokenRequestDTO) {
         RefreshToken refreshToken = refreshTokenService.findByToken(refreshTokenRequestDTO.getToken())
                 .filter(refreshTokenService::verifyExpiration)
                 .orElseThrow(() -> new RefreshTokenNotFoundException("Refresh token not found or expired"));

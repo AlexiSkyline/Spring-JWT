@@ -1,8 +1,8 @@
 package org.skyline.jwt.services;
 
 import lombok.RequiredArgsConstructor;
-import org.skyline.jwt.dto.input.UserRequest;
-import org.skyline.jwt.dto.output.UserResponse;
+import org.skyline.jwt.dto.input.UserRequestDTO;
+import org.skyline.jwt.dto.output.UserResponseDTO;
 import org.skyline.jwt.enums.TypeRole;
 import org.skyline.jwt.helpers.CustomUserDetails;
 import org.skyline.jwt.mappers.UserMapper;
@@ -30,21 +30,21 @@ public class UserService implements IUserService {
     private final UserMapper userMapper;
 
     @Override
-    public Optional<UserResponse> saveUser(UserRequest userRequest) {
-        Optional<User> userFound =  userRepository.findByEmail(userRequest.getEmail());
+    public Optional<UserResponseDTO> saveUser(UserRequestDTO userRequestDTO) {
+        Optional<User> userFound =  userRepository.findByEmail(userRequestDTO.getEmail());
         Optional<Role> userRole = roleRepository.findByName(TypeRole.ROLE_USER);
 
         if (userFound.isPresent() || userRole.isEmpty()) return Optional.empty();
 
-        userRequest.setPassword(this.passwordEncoder.encode(userRequest.getPassword()));
-        User newUser = this.userMapper.userRequestToUser(userRequest);
+        userRequestDTO.setPassword(this.passwordEncoder.encode(userRequestDTO.getPassword()));
+        User newUser = this.userMapper.userRequestToUser(userRequestDTO);
         newUser.setRoles(Collections.singleton(userRole.get()));
 
         return Optional.of(userMapper.userToUserResponse(this.userRepository.save(newUser)));
     }
 
     @Override
-    public Optional<UserResponse> getUser() {
+    public Optional<UserResponseDTO> getUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails userDetail = (CustomUserDetails) authentication.getPrincipal();
         String emailFromJwt = userDetail.getEmail();
@@ -53,7 +53,7 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public List<UserResponse> getAllUser() {
+    public List<UserResponseDTO> getAllUser() {
         return userRepository.findAll().stream().map(userMapper::userToUserResponse).toList();
     }
 }
