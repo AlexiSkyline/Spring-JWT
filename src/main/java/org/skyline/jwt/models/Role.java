@@ -1,19 +1,17 @@
 package org.skyline.jwt.models;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
+import org.skyline.jwt.enums.TypeRole;
 
 import java.util.UUID;
 
-@Data
 @Entity
-@ToString
+@Builder
+@Setter @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Role {
@@ -25,5 +23,6 @@ public class Role {
     @Column(length = 36, columnDefinition = "varchar(36)", updatable = false, nullable = false)
     private UUID id;
 
-    private String name;
+    @Enumerated( EnumType.STRING )
+    private TypeRole name;
 }
