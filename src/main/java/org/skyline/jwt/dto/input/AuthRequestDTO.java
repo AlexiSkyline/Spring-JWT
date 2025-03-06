@@ -1,15 +1,14 @@
 package org.skyline.jwt.dto.input;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Builder
+@Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthRequestDTO {
 
-    private String username;
+    private String email;
     private String password;
 }
 

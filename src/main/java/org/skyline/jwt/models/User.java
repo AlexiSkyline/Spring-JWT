@@ -2,10 +2,7 @@ package org.skyline.jwt.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
@@ -14,9 +11,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-@Data
 @Entity
-@ToString
+@Builder
+@Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -33,6 +30,7 @@ public class User {
     @JsonIgnore
     private String password;
 
+    @Builder.Default
     @ManyToMany(fetch = FetchType.EAGER)
     private Set<Role> roles = new HashSet<>();
 }

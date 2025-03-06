@@ -31,6 +31,8 @@ public class RefreshTokenService implements IRefreshTokenService {
                 .expiryDate(Instant.now().plusMillis(600000))
                 .build();
 
+        refreshTokenRepository.findByUserId(userFound.get().getId()).ifPresent(refreshTokenRepository::delete);
+
         return Optional.of(refreshTokenRepository.save(refreshToken));
     }
 
@@ -41,7 +43,7 @@ public class RefreshTokenService implements IRefreshTokenService {
 
     @Override
     public Boolean verifyExpiration(RefreshToken token) {
-        if(token.getExpiryDate().compareTo(Instant.now())<0){
+        if(token.getExpiryDate().compareTo(Instant.now()) < 0){
             refreshTokenRepository.delete(token);
             return false;
         }

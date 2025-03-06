@@ -9,4 +9,5 @@ import java.util.UUID;
 public interface RefreshTokenRepository extends CrudRepository<RefreshToken, UUID> {
 
     Optional<RefreshToken> findByToken(String token);
+    Optional<RefreshToken> findByUserId(UUID id);
 }
