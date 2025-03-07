@@ -50,4 +50,10 @@ public class RefreshTokenService implements IRefreshTokenService {
 
         return true;
     }
+
+    @Override
+    public void deleteByUserEmail(String email) {
+        refreshTokenRepository.findByUserEmail(email)
+                .ifPresent((refreshTokenRepository::delete));
+    }
 }

@@ -1,5 +1,6 @@
 package org.skyline.jwt.controllers;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.skyline.jwt.dto.input.LoginRequestDTO;
@@ -88,6 +89,16 @@ public class UserController {
                 .orElseThrow(() -> new RefreshTokenNotFoundException("Refresh token not found or expired"));
 
         return ResponseEntity.ok(buildJwtResponse(refreshToken.getUser().getEmail(), refreshToken.getToken()));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletRequest request) {
+        String token = jwtUtils.extractTokenFromRequest(request);
+        String email = jwtUtils.extractUsername(token);
+
+        refreshTokenService.deleteByUserEmail(email);
+        userService.logout(request);
+        return ResponseEntity.noContent().build();
     }
 
     private JwtResponseDTO buildJwtResponse(String email, String refreshToken) {

@@ -8,5 +8,6 @@ public interface IRefreshTokenService {
 
     Optional<RefreshToken> createRefreshToken(String email);
     Optional<RefreshToken> findByToken(String token);
+    void deleteByUserEmail(String email);
     Boolean verifyExpiration(RefreshToken token);
 }

@@ -8,6 +8,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.skyline.jwt.helpers.CustomUserDetails;
 import org.skyline.jwt.helpers.UserDetailsServiceImpl;
+import org.skyline.jwt.services.TokenBlacklistService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -23,6 +24,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
     private final UserDetailsServiceImpl userDetailsService;
+    private final TokenBlacklistService blacklistService;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
@@ -33,13 +35,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String username = this.jwtUtils.extractUsername(token);
             CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(username);
 
-            if(Boolean.TRUE.equals(jwtUtils.validateToken(token, userDetails.getEmail()))){
+            if(Boolean.TRUE.equals(jwtUtils.validateToken(token, userDetails.getEmail())) && Boolean.TRUE.equals(!blacklistService.isBlacklisted(token))){
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }
-
         }
 
         filterChain.doFilter(request, response);

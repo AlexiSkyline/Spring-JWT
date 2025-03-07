@@ -1,5 +1,6 @@
 package org.skyline.jwt.services;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.skyline.jwt.dto.input.UserRequestDTO;
 import org.skyline.jwt.dto.output.UserResponseDTO;
@@ -27,6 +28,7 @@ public class UserService implements IUserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TokenBlacklistService tokenBlacklistService;
     private final UserMapper userMapper;
 
     @Override
@@ -55,5 +57,10 @@ public class UserService implements IUserService {
     @Override
     public List<UserResponseDTO> getAllUser() {
         return userRepository.findAll().stream().map(userMapper::userToUserResponse).toList();
+    }
+
+    @Override
+    public void logout(HttpServletRequest request) {
+        tokenBlacklistService.addToBlacklist(request);
     }
 }
