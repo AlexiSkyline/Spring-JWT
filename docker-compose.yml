@@ -1,15 +1,13 @@
 version: '3.8'
 
 services:
-  mysql:
+  mysql8:
     image: mysql:8.0
-    container_name: mysql-container
+    container_name: mysql8
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: auth_db
-      MYSQL_USER: user
-      MYSQL_PASSWORD: user
     ports:
       - "3307:3306"
     volumes:
@@ -17,9 +15,9 @@ services:
     networks:
       - spring-jwt-networks
 
-  redis:
+  redis6:
     image: redis:6.2-alpine
-    container_name: redis-container
+    container_name: redis6
     restart: always
     ports:
       - "6379:6379"
@@ -27,6 +25,21 @@ services:
       - redis-data:/data
     networks:
       - spring-jwt-networks
+
+  spring-boot-jwt:
+    container_name: spring-boot-jwt
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    ports:
+      - "8080:8080"
+    env_file: ./.env
+    networks:
+      - spring-jwt-networks
+    depends_on:
+      - mysql8
+      - redis6
+    restart: always
 
 volumes:
   mysql-data:

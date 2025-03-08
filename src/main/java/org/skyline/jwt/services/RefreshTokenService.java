@@ -5,12 +5,13 @@ import org.skyline.jwt.models.RefreshToken;
 import org.skyline.jwt.models.User;
 import org.skyline.jwt.repositories.RefreshTokenRepository;
 import org.skyline.jwt.repositories.UserRepository;
+import org.skyline.jwt.security.JwtUtils;
 import org.skyline.jwt.services.interfaces.IRefreshTokenService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -18,18 +19,16 @@ public class RefreshTokenService implements IRefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
+    private final JwtUtils jwtUtils;
 
     @Override
+    @Transactional
     public Optional<RefreshToken> createRefreshToken(String email) {
         Optional<User> userFound = userRepository.findByEmail(email);
 
         if (userFound.isEmpty()) return Optional.empty();
 
-        RefreshToken refreshToken = RefreshToken.builder()
-                .user(userFound.get())
-                .token(UUID.randomUUID().toString())
-                .expiryDate(Instant.now().plusMillis(600000))
-                .build();
+        RefreshToken refreshToken = jwtUtils.createRefreshToken(userFound.get());
 
         refreshTokenRepository.findByUserId(userFound.get().getId()).ifPresent(refreshTokenRepository::delete);
 
@@ -37,11 +36,13 @@ public class RefreshTokenService implements IRefreshTokenService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<RefreshToken> findByToken(String token) {
         return refreshTokenRepository.findByToken(token);
     }
 
     @Override
+    @Transactional
     public Boolean verifyExpiration(RefreshToken token) {
         if(token.getExpiryDate().compareTo(Instant.now()) < 0){
             refreshTokenRepository.delete(token);
@@ -52,6 +53,7 @@ public class RefreshTokenService implements IRefreshTokenService {
     }
 
     @Override
+    @Transactional
     public void deleteByUserEmail(String email) {
         refreshTokenRepository.findByUserEmail(email)
                 .ifPresent((refreshTokenRepository::delete));

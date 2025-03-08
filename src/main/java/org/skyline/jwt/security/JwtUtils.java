@@ -5,14 +5,18 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
+import org.skyline.jwt.models.RefreshToken;
+import org.skyline.jwt.models.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import javax.crypto.SecretKey;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Component
@@ -23,6 +27,9 @@ public class JwtUtils {
 
     @Value("${token-expiration}")
     private Integer expiration;
+
+    @Value("${refresh-token-expiration}")
+    private long refreshTokenExpiration;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -81,5 +88,13 @@ public class JwtUtils {
         }
 
         return null;
+    }
+
+    public RefreshToken createRefreshToken(User user) {
+        return RefreshToken.builder()
+                .user(user)
+                .token(UUID.randomUUID().toString())
+                .expiryDate(Instant.now().plusMillis(refreshTokenExpiration))
+                .build();
     }
 }
