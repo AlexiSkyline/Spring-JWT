@@ -11,13 +11,12 @@ import org.skyline.jwt.models.exception.InvalidCredentialsException;
 import org.skyline.jwt.models.exception.RefreshTokenNotFoundException;
 import org.skyline.jwt.models.exception.UserNotFoundException;
 import org.springframework.context.MessageSource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -30,6 +29,7 @@ import java.util.*;
 
 @AllArgsConstructor
 @RestControllerAdvice
+@RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private final MessageSource messageSource;
@@ -54,6 +54,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(errorResponse, status);
     }
 
+    @ResponseStatus(code = HttpStatus.CONFLICT)
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse<String>> handleEmailAlreadyExistsException(EmailAlreadyExistsException ex, WebRequest request) {
         ErrorResponse<String> errorResponse = buildErrorResponse(
@@ -65,6 +66,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
+    @ResponseStatus(code = HttpStatus.CONFLICT)
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse<String>> handleUserNotFoundException(UserNotFoundException ex, WebRequest request) {
         ErrorResponse<String> errorResponse = buildErrorResponse(
@@ -76,6 +78,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
+    @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponse<String>> handleInvalidCredentialsException(InvalidCredentialsException ex, WebRequest request) {
         ErrorResponse<String> errorResponse = buildErrorResponse(
@@ -88,6 +91,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 
+    @ResponseStatus(code = HttpStatus.NOT_FOUND)
     @ExceptionHandler(RefreshTokenNotFoundException.class)
     public ResponseEntity<ErrorResponse<String>> handleRefreshTokenNotFoundException(RefreshTokenNotFoundException ex, WebRequest request) {
         ErrorResponse<String> errorResponse = buildErrorResponse(
@@ -100,6 +104,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(ExpiredJwtException.class)
+    @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
     public ResponseEntity<ErrorResponse<String>> handleExpiredJwtException(ExpiredJwtException ex, WebRequest request) {
         ErrorResponse<String> errorResponse = buildErrorResponse(
                 HttpStatus.UNAUTHORIZED.value(),
@@ -111,6 +116,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(SignatureException.class)
+    @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
     public ResponseEntity<ErrorResponse<String>> handleSignatureException(SignatureException ex, WebRequest request) {
         ErrorResponse<String> errorResponse = buildErrorResponse(
                 HttpStatus.UNAUTHORIZED.value(),
@@ -122,6 +128,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(MalformedJwtException.class)
+    @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
     public ResponseEntity<ErrorResponse<String>> handleMalformedJwtException(MalformedJwtException ex, WebRequest request) {
         ErrorResponse<String> errorResponse = buildErrorResponse(
                 HttpStatus.UNAUTHORIZED.value(),
@@ -133,6 +140,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
+    @ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<ErrorResponse<String>> handleGenericException(Exception ex, WebRequest request) {
         ErrorResponse<String> errorResponse = buildErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
@@ -143,6 +151,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 
+    @ResponseStatus(code = HttpStatus.FORBIDDEN)
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse<String>> handleAccessDeniedException(AccessDeniedException ex, WebRequest request) {
         ErrorResponse<String> errorResponse = buildErrorResponse(
@@ -154,6 +163,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
     }
 
+    @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse<String>> handleAuthenticationException(AuthenticationException ex, WebRequest request) {
         ErrorResponse<String> errorResponse = buildErrorResponse(

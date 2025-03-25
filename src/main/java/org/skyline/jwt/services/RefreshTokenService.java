@@ -28,9 +28,9 @@ public class RefreshTokenService implements IRefreshTokenService {
 
         if (userFound.isEmpty()) return Optional.empty();
 
-        RefreshToken refreshToken = jwtUtils.createRefreshToken(userFound.get());
-
-        refreshTokenRepository.findByUserId(userFound.get().getId()).ifPresent(refreshTokenRepository::delete);
+        RefreshToken refreshToken = refreshTokenRepository.findByUserId(userFound.get().getId())
+                .map(existingToken -> jwtUtils.refreshOrCreateToken(existingToken, userFound.get()))
+                .orElse(jwtUtils.createRefreshToken(userFound.get()));
 
         return Optional.of(refreshTokenRepository.save(refreshToken));
     }

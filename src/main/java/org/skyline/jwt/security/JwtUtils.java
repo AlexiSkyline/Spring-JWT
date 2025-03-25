@@ -90,6 +90,16 @@ public class JwtUtils {
         return null;
     }
 
+    public RefreshToken refreshOrCreateToken(RefreshToken existingToken, User user) {
+        if (existingToken == null) {
+            return createRefreshToken(user);
+        }
+
+        existingToken.setToken(UUID.randomUUID().toString());
+        existingToken.setExpiryDate(Instant.now().plusMillis(refreshTokenExpiration));
+        return existingToken;
+    }
+
     public RefreshToken createRefreshToken(User user) {
         return RefreshToken.builder()
                 .user(user)
